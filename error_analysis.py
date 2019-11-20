@@ -65,6 +65,8 @@ def main(output):
     )
     print("Microaverage precision: {:.5f}".format(macro_stat[0]))
 
+    stats, table = precesion_and_recall(set(gold_labels + predicted_labels), confusion_matrix)
+    print(table)
 
 if __name__ == "__main__":
     main()
