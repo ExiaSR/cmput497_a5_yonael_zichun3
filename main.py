@@ -27,20 +27,21 @@ def main(train, test, evaluate):
     if evaluate:
         evaluate_dataset = get_dataset(evaluate)
 
-    # TODO
     # train model
-    # classifier = NaiveBayesClassifier.train()
+    classifier = NaiveBayesClassifier.train(train_dataset)
 
     # classify model and save output
-    # if test_dataset:
-    #     test_predicited_labels = classifier.classify(test_dataset.text())
-    #     test_dataset._set_predicted_labels(test_predicited_labels)
-    #     save_output(test_dataset)
+    if test:
+        test_predicited_labels = classifier.classify(test_dataset.documents())
+        test_dataset._set_predicted_labels(test_predicited_labels)
+        save_output(test_dataset)
+        test_accuracy = accuracy(test_predicited_labels, test_dataset.labels())
+        print("Total: {}, Accuracy: {:.3f}%".format(len(test_predicited_labels), 100 * test_accuracy))
 
-    # if evaluate_dataset:
-    #     evaluate_predicited_labels = classifier.classify(evaluate_dataset.text())
-    #     evaluate_dataset._set_predicted_labels(evaluate_predicited_labels)
-    #     save_output(evaluate_dataset)
+    if evaluate:
+        evaluate_predicited_labels = classifier.classify(evaluate_dataset.documents())
+        evaluate_dataset._set_predicted_labels(evaluate_predicited_labels)
+        save_output(evaluate_dataset)
 
 
 if __name__ == "__main__":
