@@ -43,12 +43,6 @@ class Dataset:
     def predicted_labels(self):
         return self._predicted_labels
 
-    def num_documents(self):
-        return len(self._text)
-
-    def num_documents_by_class(self, class_name):
-        return self._document_by_class_counter[class_name]
-
     def get_labeled_featuresets(self):
         """
         :return: A list of labeled word.
