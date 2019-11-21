@@ -12,45 +12,17 @@ from collections import Counter
 import click
 
 from nltk.metrics import ConfusionMatrix
+from sklearn import metrics
 from prettytable import PrettyTable
+from mlxtend.plotting import plot_confusion_matrix
+from tabulate import tabulate
+import matplotlib.pyplot as plt
+
 
 def get_output(file):
     csv_reader = csv.reader(file)
     next(csv_reader, None)
     return list(csv_reader)
-
-# taken from https://stackoverflow.com/a/23715286/4557739
-def precesion_and_recall(labels, cm):
-    # precision and recall
-    true_positives = Counter()
-    false_negatives = Counter()
-    false_positives = Counter()
-
-    for i in labels:
-        for j in labels:
-            if i == j:
-                true_positives[i] += cm[i, j]
-            else:
-                false_negatives[i] += cm[i, j]
-                false_positives[j] += cm[i, j]
-
-    results = []
-    table = PrettyTable()
-    table.field_names = ["label", "precision", "recall", "f-score"]
-    for each in sorted(labels):
-        if true_positives[each] == 0:
-            fscore = 0
-            results.append({"label": each, "f_score": fscore})
-            table.add_row([each, None, None, fscore])
-        else:
-            precision = true_positives[each] / float(true_positives[each] + false_positives[each])
-            recall = true_positives[each] / float(true_positives[each] + false_negatives[each])
-            fscore = 2 * (precision * recall) / float(precision + recall)
-            results.append(
-                {"label": each, "precision": precision, "recall": recall, "f_score": fscore}
-            )
-            table.add_row([each, precision, recall, fscore])
-    return results, table
 
 
 @click.command()
@@ -62,13 +34,37 @@ def main(output):
     zipped = list(zip(*get_output(output)))
     gold_labels = zipped[0]
     predicted_labels = zipped[1]
+    classes = list(set(gold_labels + predicted_labels))
 
-    confusion_matrix = ConfusionMatrix(gold_labels, predicted_labels)
+    confusion_matrix = ConfusionMatrix(gold_labels, predicted_labels, sort_by_count=True)
+    sorted_labels = confusion_matrix._values
+    cm = metrics.confusion_matrix(gold_labels, predicted_labels, labels=sorted_labels)
 
-    print(confusion_matrix.pretty_format(sort_by_count=True, show_percents=True, truncate=9))
+    fig, ax = plot_confusion_matrix(cm, class_names=sorted_labels)
+    fig.subplots_adjust(bottom=0.24)
+    plt.savefig("cm.png")
 
-    stats, table = precesion_and_recall(set(gold_labels + predicted_labels), confusion_matrix)
-    print(table)
+    # get confusion matrix and precision/recall
+    global_precision, global_recall, global_f_score, _ = metrics.precision_recall_fscore_support(
+        gold_labels, predicted_labels, labels=sorted_labels
+    )
+    global_table = zip(sorted_labels, global_precision, global_recall, global_f_score)
+    print(tabulate(global_table, headers=["Label", "Precision", "Recall", "F Score"]))
+
+    print("\n")
+
+    # aggregated precision
+    pooled_stat = metrics.precision_recall_fscore_support(
+        gold_labels, predicted_labels, average="micro", labels=sorted_labels
+    )
+    print("Aggregated microaverage precision: {:.5f}".format(pooled_stat[0]))
+
+    # macro-averaged precision
+    macro_stat = metrics.precision_recall_fscore_support(
+        gold_labels, predicted_labels, average="macro", labels=sorted_labels
+    )
+    print("Microaverage precision: {:.5f}".format(macro_stat[0]))
+
 
 if __name__ == "__main__":
     main()
