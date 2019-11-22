@@ -1,5 +1,5 @@
 from operator import itemgetter
-from collections import defaultdict, OrderedDict, Counter
+from collections import defaultdict, Counter
 from functools import reduce
 
 import numpy as np
@@ -13,30 +13,31 @@ class NaiveBayesClassifier:
         self._classes = classes
 
     @classmethod
-    def train(cls, dataset: "Dataset"):
+    def train(cls, labeled_documents):
         """
-        c -> class/label
-        w -> word
-
-        :param dataset: A Dataset object
+        :param labeled_documents: A list of labeled documents, ``[[featureset, label], [featureset, label]]``.
+        :param epoch: Number training iterations.
         """
         # count number of occurences of each word given their originated label
-        labled_featuresets = dataset.get_labeled_featuresets()
+        # build vocabs and count occurence of class/label
         big_doc = defaultdict(Counter)
-        for word, label in labled_featuresets:
-            big_doc[label][word] += 1
-        # get vocabs
-        vocabs: set = dataset.vocabs()
-        # get labels
-        classes = list(dataset.classes())
-        # count number of documents in dataset in each class
-        label_freqdist = Counter(dataset.labels())
+        label_freqdist = Counter()
+        vocabs = set()
+        for documents, label in labeled_documents:
+            label_freqdist[label] += 1
+            for word in documents:
+                big_doc[label][word] += 1
+                vocabs.add(word)
+
         # total number of documents in dataset
         num_docs = sum(label_freqdist.values())
+        # distinct set of labels from dataset
+        classes = label_freqdist.keys()
 
         log_prior = dict()
         log_likelihood = defaultdict(dict)  # avoid key error
         for class_name in classes:
+            # train model with laplace smoothing
             num_docs_in_class = label_freqdist[class_name]
             log_prior[class_name] = np.log2(label_freqdist[class_name] / num_docs)
             denominator = sum(big_doc[class_name].values()) + len(vocabs)

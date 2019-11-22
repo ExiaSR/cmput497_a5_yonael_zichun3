@@ -1,6 +1,9 @@
 import csv
 import os
 import errno
+import random
+
+import numpy as np
 
 from collections import Counter
 
@@ -8,19 +11,26 @@ flatten = lambda l: [item for sublist in l for item in sublist]
 
 
 class Dataset:
-    def __init__(self, raw_data, file_path, preprocesser=None):
-        zipped = list(zip(*raw_data))
+    def __init__(self, raw_data, file_path, preprocesser=None, shuffle=False):
         self._path = file_path
         self._filename = os.path.splitext(os.path.basename(file_path))[0]
-        self._labels = zipped[0]  # original labels
         self._predicted_labels = []  # assigned predicted labels
+
+        if shuffle:
+            random.shuffle(raw_data)
+
+        zipped = list(zip(*raw_data))
+        self._labels = zipped[0]  # original labels
         self._text = zipped[1]
+
         if preprocesser:
-            self._documents = list(map(preprocesser, zipped[1]))
+            self._documents = list(map(preprocesser, self._text))
         else:
             # dummpy tokenizer for testing purpose
-            self._documents = list(map(lambda x: x.split(), zipped[1]))
-        self._document_by_class_counter = Counter([c for c in self._labels])
+            self._documents = list(map(lambda x: x.split(), self._text))
+
+    def __repr__(self):
+        return "<Dataset name={} N={} C={}>".format(self._filename, len(self._labels), len(self.classes()))
 
     def text(self):
         return self._text
@@ -31,14 +41,11 @@ class Dataset:
     def classes(self):
         return set(self._labels)
 
-    def tokens(self):
-        return flatten(self._documents)
-
-    def vocabs(self):
-        return set(flatten(self._documents))
-
     def documents(self):
         return self._documents
+
+    def labeled_documents(self):
+        return zip(self._documents, self._labels)
 
     def predicted_labels(self):
         return self._predicted_labels
@@ -69,7 +76,7 @@ def tokenizer(document: str):
     pass
 
 
-def get_dataset(file_path) -> Dataset:
+def get_dataset(file_path, **kwargs) -> "Dataset":
     """
     Load datasets
     :param dir: Path to datasets directory.
@@ -79,7 +86,7 @@ def get_dataset(file_path) -> Dataset:
     with open(file_path) as dataset_f:
         dataset_reader = csv.reader(dataset_f)
         next(dataset_reader, None)
-        dataset = Dataset(list(dataset_reader), file_path)
+        dataset = Dataset(list(dataset_reader), file_path, **kwargs)
         return dataset
 
 
@@ -126,3 +133,16 @@ def save_output(dataset: Dataset, dir="output/"):
         output_rows = list(zip(dataset.labels(), dataset.predicted_labels(), dataset.text()))
         output_rows.insert(0, ["category", "predictedCategory", "text"])
         output_writer.writerows(output_rows)
+
+
+# Inspire by http://code.activestate.com/recipes/521906-k-fold-cross-validation-partition/
+def k_fold(n, k):
+    indices = np.arange(n)
+    k_folds = [each.tolist() for each in np.array_split(indices, k)]
+    for test_index in k_folds:
+        train_info = ["{}-{}".format(fold[0], fold[-1]) for fold in k_folds if fold != test_index]
+        train_index = [i for i in indices if i not in test_index]
+        folds_info = "Validation fold: {}-{}, Training fold: {}".format(
+            test_index[0], test_index[-1], ",".join(train_info)
+        )
+        yield train_index, test_index, folds_info
