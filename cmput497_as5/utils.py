@@ -6,6 +6,8 @@ import random
 import numpy as np
 
 from collections import Counter
+import spacy
+nlp = spacy.load("en_core_web_sm")
 
 flatten = lambda l: [item for sublist in l for item in sublist]
 
@@ -72,8 +74,10 @@ def tokenizer(document: str):
     :return: Tokenized document.
     :rtype: ``["You", "re", "awesome"]``
     """
-    # TODO
-    pass
+    doc = nlp(document)
+    # removes stop words 
+    tokens = [token.text for token in doc if not token.is_stop]
+    return tokens 
 
 
 def get_dataset(file_path, **kwargs) -> "Dataset":
