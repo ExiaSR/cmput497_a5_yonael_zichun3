@@ -70,10 +70,11 @@ def tokenizer(document: str):
     """
     Tokenized document and other neccesary preprocessing.
 
-    :param document: One single document
+    :param document: One single sentence
     :return: Tokenized document.
     :rtype: ``["You", "re", "awesome"]``
     """
+
     doc = nlp(document)
     # removes stop words 
     tokens = [token.text for token in doc if not token.is_stop]
@@ -90,7 +91,7 @@ def get_dataset(file_path, **kwargs) -> "Dataset":
     with open(file_path) as dataset_f:
         dataset_reader = csv.reader(dataset_f)
         next(dataset_reader, None)
-        dataset = Dataset(list(dataset_reader), file_path, **kwargs)
+        dataset = Dataset(list(dataset_reader), file_path, preprocesser=tokenizer, **kwargs)
         return dataset
 
 
