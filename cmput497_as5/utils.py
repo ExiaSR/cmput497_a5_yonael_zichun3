@@ -6,8 +6,9 @@ import random
 import numpy as np
 
 from collections import Counter
-import spacy
-nlp = spacy.load("en_core_web_sm")
+
+from nltk.corpus import stopwords 
+from nltk.tokenize import word_tokenize 
 
 flatten = lambda l: [item for sublist in l for item in sublist]
 
@@ -74,10 +75,10 @@ def tokenizer(document: str):
     :return: Tokenized document.
     :rtype: ``["You", "re", "awesome"]``
     """
+    stop_words = set(stopwords.words('english'))
+    word_tokens = word_tokenize(document) 
+    tokens = [w for w in word_tokens if not w in stop_words] 
 
-    doc = nlp(document)
-    # removes stop words 
-    tokens = [token.text for token in doc if not token.is_stop]
     return tokens 
 
 
