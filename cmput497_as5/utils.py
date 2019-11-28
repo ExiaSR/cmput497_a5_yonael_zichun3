@@ -7,6 +7,9 @@ import numpy as np
 
 from collections import Counter
 
+from nltk.corpus import stopwords 
+from nltk.tokenize import word_tokenize 
+
 flatten = lambda l: [item for sublist in l for item in sublist]
 
 
@@ -68,12 +71,15 @@ def tokenizer(document: str):
     """
     Tokenized document and other neccesary preprocessing.
 
-    :param document: One single document
+    :param document: One single sentence
     :return: Tokenized document.
     :rtype: ``["You", "re", "awesome"]``
     """
-    # TODO
-    pass
+    stop_words = set(stopwords.words('english'))
+    word_tokens = word_tokenize(document) 
+    tokens = [w for w in word_tokens if not w in stop_words] 
+
+    return tokens 
 
 
 def get_dataset(file_path, **kwargs) -> "Dataset":
@@ -86,7 +92,7 @@ def get_dataset(file_path, **kwargs) -> "Dataset":
     with open(file_path) as dataset_f:
         dataset_reader = csv.reader(dataset_f)
         next(dataset_reader, None)
-        dataset = Dataset(list(dataset_reader), file_path, **kwargs)
+        dataset = Dataset(list(dataset_reader), file_path, preprocesser=tokenizer, **kwargs)
         return dataset
 
 
