@@ -37,6 +37,8 @@ def main(output):
     classes = list(set(gold_labels + predicted_labels))
 
     confusion_matrix = ConfusionMatrix(gold_labels, predicted_labels, sort_by_count=True)
+    print(confusion_matrix)
+    print('\n')
     sorted_labels = confusion_matrix._values
     cm = metrics.confusion_matrix(gold_labels, predicted_labels, labels=sorted_labels)
 
@@ -63,7 +65,7 @@ def main(output):
     macro_stat = metrics.precision_recall_fscore_support(
         gold_labels, predicted_labels, average="macro", labels=sorted_labels
     )
-    print("Microaverage precision: {:.5f}".format(macro_stat[0]))
+    print("Macro average precision: {:.5f}".format(macro_stat[0]))
 
 
 if __name__ == "__main__":
