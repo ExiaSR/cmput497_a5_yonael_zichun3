@@ -2,13 +2,15 @@ import csv
 import os
 import errno
 import random
-
-import numpy as np
-
 from collections import Counter
 
-from nltk.corpus import stopwords 
-from nltk.tokenize import word_tokenize 
+import numpy as np
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+
+nltk.download("stopwords")
+nltk.download("punkt")
 
 flatten = lambda l: [item for sublist in l for item in sublist]
 
@@ -75,11 +77,11 @@ def tokenizer(document: str):
     :return: Tokenized document.
     :rtype: ``["You", "re", "awesome"]``
     """
-    stop_words = set(stopwords.words('english'))
-    word_tokens = word_tokenize(document) 
-    tokens = [w for w in word_tokens if not w in stop_words] 
+    stop_words = set(stopwords.words("english"))
+    word_tokens = word_tokenize(document)
+    tokens = [w for w in word_tokens if not w in stop_words]
 
-    return tokens 
+    return tokens
 
 
 def get_dataset(file_path, **kwargs) -> "Dataset":
